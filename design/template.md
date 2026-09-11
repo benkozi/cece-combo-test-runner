@@ -14,6 +14,7 @@
 - when using python `typing`, avoid `Any` as much as possible
 - **never, ever, ever** commit code or use git actions that perform updates - the user always updates
 - always prefer the harness's logging implementation over raw python print statements
+- no need for wrapping when writing to the `./design` folder. wrapping will be handled by the user's ide
 
 ## testing
 
