@@ -232,7 +232,7 @@ def test_unknown_nested_cece_config_key_rejected(
 
 
 # ── Enum ground truth (mirrors the C++ driver; hand-maintained, so asserted
-# here — see design/feat/20260716-1647-exhaustive-maccity.md) ────────────────
+# here — see design/feat/20260716-1647-exhaustive-maccity/20260716-1647-exhaustive-maccity.md) ────────────────
 
 
 def test_mapalgo_matches_driver_canonical_values() -> None:

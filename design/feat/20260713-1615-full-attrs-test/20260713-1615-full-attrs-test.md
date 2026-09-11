@@ -3,7 +3,7 @@
 ## Goal
 
 Generalize the per-species units check
-(`design/feat/20260713-1049-expected-output-units.md`, since implemented and
+(`design/feat/20260713-1049-expected-output-units/20260713-1049-expected-output-units.md`, since implemented and
 green) to the **complete attribute dictionary** of the species' variable in
 every NetCDF a combination produces. The suite declares the expected
 attributes per species and whether the match is **exact** (the attribute

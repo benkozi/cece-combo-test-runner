@@ -3,7 +3,7 @@
 ## Goal
 
 Execute the consolidation prescribed by
-`design/artifacts/20260720-0950-examples-report.md` in the CECE checkout
+`design/artifacts/20260720-0950-optional-run-examples/20260720-0950-examples-report.md` in the CECE checkout
 (branch `fix/all-examples-pass`): one example set, one download location,
 every discovered example green under the runner's `--run-examples` gate.
 Work happens in CECE's **examples and scripts only — never `CECE/src`**
@@ -283,7 +283,7 @@ red/green loop **is** `--run-examples` itself:
 - **`design.md`** (runner): the `--run-examples` bullet and layout
   references say `examples/` instead of `scripts/examples/`.
 - **`README.md`** (runner): same path correction in the Options bullet.
-- `design/artifacts/20260720-0950-examples-report.md` stays as-is — it is
+- `design/artifacts/20260720-0950-optional-run-examples/20260720-0950-examples-report.md` stays as-is — it is
   the record this fix executes; this doc's implementation notes record
   the outcome (including the cfg-removal answer and any rung-3 blockers).
 - CECE-side commits happen on `fix/all-examples-pass` in the CECE repo
@@ -416,7 +416,7 @@ set and the pending-CAMS failures.
 
 ## requirements
 
-- follow the recommendations from design/feat/20260720-0950-optional-run-examples.md
+- follow the recommendations from design/feat/20260720-0950-optional-run-examples/20260720-0950-optional-run-examples.md
 - fix and consolidate cece examples until they all pass
 - DO NOT modify CECE/src code
 - report back if there are fundamental issues that cannot be addressed (broken downloads or missing data)

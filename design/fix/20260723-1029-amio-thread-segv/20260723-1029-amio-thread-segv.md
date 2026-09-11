@@ -5,7 +5,7 @@
 Make `examples/config/cece_config_ex7.yaml` run green with
 `amio_worker_threads: 2` — fixing the underlying AMIO threading crash
 rather than pinning around it. This operationalizes the investigation
-designed in `design/spike/20260720-1654-investigate-amio-threads-failure.md`
+designed in `design/spike/20260720-1654-investigate-amio-threads-failure/20260720-1654-investigate-amio-threads-failure.md`
 (background, hypotheses, and prior evidence live there), with one major
 scope change from the spike: **fixing code is now in scope** — the
 requirements name both suspects, "the installed libraries or the cece
@@ -257,7 +257,7 @@ note), and the one-line-plus-comment lock in
 ## requirements
 
 - examples/config/cece_config_ex7.yaml should pass with amio_worker_threads: 2
-- reference design/spike/20260720-1654-investigate-amio-threads-failure.md for some additional background info
+- reference design/spike/20260720-1654-investigate-amio-threads-failure/20260720-1654-investigate-amio-threads-failure.md for some additional background info
 - it is okay to rebuild the dev container from setup.sh (never build ESMF)
 - could consider building the CECE stack with debug symbols and running through gdb
 - for any container rebuilds, use the `--builder cloud-bkrlps-cece-builder` - should be the default but just to make sure

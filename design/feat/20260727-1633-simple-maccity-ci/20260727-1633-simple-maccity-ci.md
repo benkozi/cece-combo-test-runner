@@ -25,7 +25,7 @@ final commit on this branch, not a follow-up.
 Verified on runner `feat/ci-simple-maccity` and the CECE checkout.
 
 1. **CI plumbing already exists to copy from**
-   (`design/feat/20260724-1449-basic-ci.md`, implemented):
+   (`design/feat/20260724-1449-basic-ci/20260724-1449-basic-ci.md`, implemented):
    `.github/workflows/ci.yaml` builds the runner's own `Dockerfile`
    via buildx with `type=gha` caching and runs pre-commit + harness
    tests inside it; `on:` covers all PRs plus pushes to

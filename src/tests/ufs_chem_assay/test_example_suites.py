@@ -1,4 +1,4 @@
-"""Examples-as-suites (design/feat/20260724-0907-examples-as-suites.md):
+"""Examples-as-suites (design/feat/20260724-0907-examples-as-suites/20260724-0907-examples-as-suites.md):
 the CeceConfig surface the shipped examples use, the universal
 driver.log_file redirect, the ${CECE_ROOT_DIR} config_path anchor, and
 the checked-in ex*-suite.yaml files. All against fabricated trees — the

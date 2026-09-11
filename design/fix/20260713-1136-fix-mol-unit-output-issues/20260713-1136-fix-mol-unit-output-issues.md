@@ -14,7 +14,7 @@ The output fields are stacked **emission fluxes** (the MACCity input
 variable carries `kg/m2/s`), so both attributes are factually wrong — this
 is exactly what `test_species_units` has been failing on
 (`expected 'kg m-2 s-1', found 'mol mol-1'`, per
-`design/feat/20260713-1049-expected-output-units.md`).
+`design/feat/20260713-1049-expected-output-units/20260713-1049-expected-output-units.md`).
 
 **Finding vs. the original note**: no `extern/helm/libs/conf` ↔
 `extern/helm/libs/amio` changes are needed. AMIO already carries arbitrary

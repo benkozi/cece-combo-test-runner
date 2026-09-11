@@ -19,8 +19,8 @@ is used consistently everywhere: `HARNESS_NAME` in `src/logs.py` (logger
 namespace, plot footer), the `pyproject.toml` name, the image tags, the CI
 output root, and — underscored, because mypy requires a valid package name —
 the harness test package `src/tests/ufs_chem_assay/`. See
-`design/spike/20260901-1229-rename-and-plan-for-catchem.md` and
-`design/feat/20260901-1701-rename-repo.md`.
+`design/spike/20260901-1229-rename-and-plan-for-catchem/20260901-1229-rename-and-plan-for-catchem.md` and
+`design/feat/20260901-1701-rename-repo/20260901-1701-rename-repo.md`.
 
 ## Non-goals
 
@@ -28,16 +28,16 @@ the harness test package `src/tests/ufs_chem_assay/`. See
   run` command (`src/cli/`, 2026-09-03) orchestrates environment, CECE
   build, data, and the pytest invocation from one run config — it never
   re-implements test logic (see
-  `design/feat/20260903-1453-run-on-rdhpc.md`).
+  `design/feat/20260903-1453-run-on-rdhpc/20260903-1453-run-on-rdhpc.md`).
 - No dependency on existing CECE Python infrastructure; the runner lives in
   its **own repository** with its own `uv`-managed environment. The CECE
   checkout (driver build, input data) is external, located via the
   `root_dir` setting (`--cece-root-dir` flag or `CECE_ROOT_DIR` env var)
   and mounted at `/work` in the driver container (see
-  `design/fix/20260717-1029-portability-external-cece.md`).
+  `design/fix/20260717-1029-portability-external-cece/20260717-1029-portability-external-cece.md`).
 - No online baseline retrieval or baseline manifest yet — baselines are
   local directories keyed by ULID (see
-  `design/feat/20260716-1113-compare-with-baseline.md`); no stats-CSV
+  `design/feat/20260716-1113-compare-with-baseline/20260716-1113-compare-with-baseline.md`); no stats-CSV
   diffing (the comparison targets the NetCDF files themselves).
 
 ## Suite configuration
@@ -110,7 +110,7 @@ against the enum's values into the sorted matching list at load time — so
 suite was written, and `run.yaml` records the expanded list (the run stays
 reproducible as enums grow). A regex matching nothing, like an invalid one,
 fails the load. See
-`design/feat/20260716-1647-exhaustive-maccity.md`, whose
+`design/feat/20260716-1647-exhaustive-maccity/20260716-1647-exhaustive-maccity.md`, whose
 `exhaustive-maccity-run-only-suite.yaml` sweeps `".*"` on every
 driver-meaningful dimension and pins the inert `category` label to
 `undefined` (240 combinations, run on demand — typically with `--dry-run`
@@ -120,12 +120,12 @@ Duplicate sweep values, duplicate stream names, and unknown keys are all
 rejected at load; sweep selectors (stream names, species keys, entry counts)
 are validated against the loaded base config at session start, before any
 container runs. See
-`design/feat/20260709-1131-attach-sweeps-to-streams.md`.
+`design/feat/20260709-1131-attach-sweeps-to-streams/20260709-1131-attach-sweeps-to-streams.md`.
 
 A suite file fully describes a run: which base scenario (`config_path`),
 the per-combination timeout, and which sweep. Full `config_path` resolution
 and timeout semantics live in
-`design/feat/20260707-1515-use-cece-config-directory.md`.
+`design/feat/20260707-1515-use-cece-config-directory/20260707-1515-use-cece-config-directory.md`.
 
 `sweep:` is optional: a suite attaching no dimensions runs its base config
 as the single combination named `base` (its id a runtime ULID like every
@@ -138,7 +138,7 @@ the full pipeline; using such a suite without a configured root is the
 standard root-dir usage error. Generated combo configs also always point
 `driver.log_file` into the combo's output directory, so no base config —
 the examples set relative paths — can write a log into the checkout. See
-`design/feat/20260724-0907-examples-as-suites.md`.
+`design/feat/20260724-0907-examples-as-suites/20260724-0907-examples-as-suites.md`.
 
 Reusing the enums from `cece_config.py` means invalid values fail at suite-load
 time with a pydantic error, before any container runs.
@@ -165,7 +165,7 @@ Each swept dimension attaches to an explicit target; the sweep says where:
 | `Mapalgo`     | 6      | a stream, selected by `name`                   |
 
 The enum values are hand-mirrored from the driver C++ (audited in
-`design/feat/20260716-1647-exhaustive-maccity.md`): `Mapalgo` holds only the
+`design/feat/20260716-1647-exhaustive-maccity/20260716-1647-exhaustive-maccity.md`): `Mapalgo` holds only the
 regridder's canonical values (`passthrough, nn, bilinear, cubic, conss,
 consd` — unknown strings silently regrid with the default method, so no
 others may exist here) and `VdistMethod` holds the parser's lowercase
@@ -212,7 +212,7 @@ combo, one row per sweepable dimension (per-stream
 generated config and a `swept` flag — so pinned parameters and sweep-less
 `base` combos join exactly like swept ones (within a run on `combo_id`,
 across runs on `suite` + `combo` name or the parameter columns). See
-`design/feat/20260724-1013-run-multiple-suite-configs.md`.
+`design/feat/20260724-1013-run-multiple-suite-configs/20260724-1013-run-multiple-suite-configs.md`.
 
 ## Base configuration
 
@@ -320,7 +320,7 @@ it* — a container path under docker, the host path natively — and
 generated configs carry it in `output.directory` and `driver.log_file`.
 The base config's data path is cwd-relative (`data/MACCity_4x5.nc`) so
 it resolves under both runtimes. See
-`design/feat/20260903-1453-run-on-rdhpc.md`.
+`design/feat/20260903-1453-run-on-rdhpc/20260903-1453-run-on-rdhpc.md`.
 
 Under docker each combination runs independently in a fresh container using the image built
 by `setup.sh` (`cece/cece-dev`, assumed already built — the runner never
@@ -371,7 +371,7 @@ exit is the failure condition. The environment variables mirror `setup.sh`
   fixture that captures the outcome without raising; `test_driver_execution`
   asserts exit 0, and each post-run assertion (`test_nc_file_count`, …) is
   its own test that skips explicitly when the run failed. See
-  `design/feat/20260708-1055-add-assertions-for-file-counts.md`.
+  `design/feat/20260708-1055-add-assertions-for-file-counts/20260708-1055-add-assertions-for-file-counts.md`.
 - **Fail fast vs. continue** uses pytest built-ins — no custom flags.
   **Continue is the default and the desired behavior**: a plain `pytest`
   invocation runs every combination to completion regardless of individual
@@ -419,7 +419,7 @@ exit is the failure condition. The environment variables mirror `setup.sh`
     `--dst-dir <root>/data` (a failing download is logged and recorded,
     never fatal). All
     examples are expected green since the consolidation fix
-    (`design/fix/20260720-1500-fix-cece-examples.md`). ex1/ex7's
+    (`design/fix/20260720-1500-fix-cece-examples/20260720-1500-fix-cece-examples.md`). ex1/ex7's
     CAMS-TEMPO inputs have no public download source yet: they run from
     local `data/` copies, and their download-script fetches 404 on a
     fresh machine until the data is published.
@@ -529,9 +529,9 @@ coupling. `design/` (records, not maintained code) and `uv.lock`
 `config_search_path`, when set, overrides normal config resolution: the
 search directory is prepended to the suite's relative `config_path`, kept
 whole so nested directories work (full semantics in
-`design/feat/20260707-1515-use-cece-config-directory.md`; that doc's
+`design/feat/20260707-1515-use-cece-config-directory/20260707-1515-use-cece-config-directory.md`; that doc's
 **suite-side** prepend semantics are superseded by the regex selector —
-see `design/feat/20260717-1052-default-suite.md`). `suite_config_search_path`
+see `design/feat/20260717-1052-default-suite/20260717-1052-default-suite.md`). `suite_config_search_path`
 feeds the selector's search roots as described under Pytest integration.
 
 ## Code layout
@@ -613,7 +613,7 @@ there.
 
 ## CI and releases
 
-Full rationale in `design/feat/20260724-1449-basic-ci.md`; the load-bearing
+Full rationale in `design/feat/20260724-1449-basic-ci/20260724-1449-basic-ci.md`; the load-bearing
 mechanics:
 
 - **One toolchain image** (`Dockerfile`, context allowlisted by

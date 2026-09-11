@@ -1,7 +1,7 @@
 # Spike: investigate AMIO reliability — worker-threads crash + error-reporting clarity
 
 > **Absorbed** (2026-07-23) by
-> `design/fix/20260723-1029-amio-thread-segv.md`, which executed the
+> `design/fix/20260723-1029-amio-thread-segv/20260723-1029-amio-thread-segv.md`, which executed the
 > investigation and landed the fix. Final verdict (corrected by the
 > lock-only experiment): the crash was AMIO's own mutex discipline
 > having one hole — an **unlocked `describe_variable`** issuing
@@ -18,7 +18,7 @@
 ## Goal
 
 Characterize **AMIO's reliability failures** — originally the
-worker-threads crash from `design/fix/20260720-1500-fix-cece-examples.md`,
+worker-threads crash from `design/fix/20260720-1500-fix-cece-examples/20260720-1500-fix-cece-examples.md`,
 refined by the 2026-07-21 findings below into **two live defect leads
 plus one confirmed diagnosability defect**:
 
@@ -322,7 +322,7 @@ concurrency).
 
 ## requirements
 
-- investigate the amio threads failure in design/fix/20260720-1500-fix-cece-examples.md
+- investigate the amio threads failure in design/fix/20260720-1500-fix-cece-examples/20260720-1500-fix-cece-examples.md
 - switch to 2 or more amio threads and generate a report in design/artifacts
 - i want to create an issue in the cece repo to investigate the issue
 - is it related to the docker execution environment? are dependencies missing? installed correctly?

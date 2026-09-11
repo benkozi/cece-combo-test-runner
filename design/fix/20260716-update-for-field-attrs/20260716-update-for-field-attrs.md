@@ -43,7 +43,7 @@ class Output(StrictModel):
   deprecation shim and no test asserting the old key's rejection.
 - Attribute values stay `str`: typed values (`NcAttrType`) belong to the
   backed-out typed-attributes follow-up
-  (`design/fix/20260713-1136-fix-mol-unit-output-issues.md`), not this fix.
+  (`design/fix/20260713-1136-fix-mol-unit-output-issues/20260713-1136-fix-mol-unit-output-issues.md`), not this fix.
 - The `str | OutputField` union round-trips through `to_yaml`/`from_yaml`
   as the driver schema: string entries stay scalars, map entries dump to
   `{name, attributes}` (with `exclude_none` dropping absent `attributes`).

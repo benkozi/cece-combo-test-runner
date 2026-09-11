@@ -128,7 +128,7 @@ above, so the writer is unit-testable. This makes every future
 
 ### The `design/artifacts/` deliverable (implementation-time)
 
-`design/artifacts/20260720-0950-examples-report.md`, authored from a real
+`design/artifacts/20260720-0950-optional-run-examples/20260720-0950-examples-report.md`, authored from a real
 `--run-examples` session on this machine (curating the generated report
 plus inspection of each failure — the note's "inspect the script
 output"). Contents:
@@ -200,7 +200,7 @@ green (examples off by default must not perturb combos).
   checkout), executes all six examples in docker, writes
   `examples/<stem>.out` and `examples/examples-report.md` under the
   output root, and reports pass/fail honestly.
-- `design/artifacts/20260720-0950-examples-report.md` exists, covering
+- `design/artifacts/20260720-0950-optional-run-examples/20260720-0950-examples-report.md` exists, covering
   every download/execution failure with root causes and prescribed fixes,
   plus the consolidation recommendations — and no file under
   `CECE_ROOT_DIR` is modified.
@@ -219,7 +219,7 @@ green (examples off by default must not perturb combos).
   fixture setup can never trigger downloads on a gated-off run (verified
   by the marker-file harness test).
 - **Real-run findings differ from the audit's expectations** — see the
-  deliverable, `design/artifacts/20260720-0950-examples-report.md`:
+  deliverable, `design/artifacts/20260720-0950-optional-run-examples/20260720-0950-examples-report.md`:
   downloads are **6/6 ok** (the `download_hemco_data.py` rewrite
   evidently fixed the old breakage; the "inspect/fix scripts" concern is
   moot), while executions are **0/6** — every example dies on the same

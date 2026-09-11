@@ -432,7 +432,7 @@ If "run them all in one command" is something you'd want often, a --suite-config
   direction. Test counts shift by one per combo (maccity dry-run 21
   rows; the multi-match subprocess expectation is now 1461).
   **Resolved later the same day**: the AMIO fix
-  (design/fix/20260724-1228-wrong-dimension-names.md — canonical-first
+  (design/fix/20260724-1228-wrong-dimension-names/20260724-1228-wrong-dimension-names.md — canonical-first
   dimension resolution in the netCDF driver's define path) landed and
   ex7 passes 3× consecutively including the dimension assertion;
   maccity (21/21) and ex3 stay green on the rebuilt driver.

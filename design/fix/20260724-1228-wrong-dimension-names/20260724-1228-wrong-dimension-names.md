@@ -13,7 +13,7 @@ and passes after; the harness is not modified — its new
 dimension assertion is the acceptance gate: **ex7 passes**.
 
 ## Background (diagnosed this session; recorded in
-design/feat/20260724-1013-run-multiple-suite-configs.md)
+design/feat/20260724-1013-run-multiple-suite-configs/20260724-1013-run-multiple-suite-configs.md)
 
 First real `ex[0-9]-suite.yaml` run (CAMS data pre-downloaded to
 `<CECE>/data`): ex1–ex6 write standard `(time, lev, lat, lon)`
@@ -274,7 +274,7 @@ consecutive runs; `nox(time, lev, lat, lon)`, no synthetic dims.**
 
 ## requirements
 
-- fix the dimension mismatch issue in amio identified in design/feat/20260724-1013-run-multiple-suite-configs.md
+- fix the dimension mismatch issue in amio identified in design/feat/20260724-1013-run-multiple-suite-configs/20260724-1013-run-multiple-suite-configs.md
 - add a unit test to amio
   - ensure the added unit test passes
   - no need to run other tests in amio

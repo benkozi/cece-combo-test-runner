@@ -2,7 +2,7 @@
 
 Produced by the first real `--run-examples` session
 (`uv run pytest src/tests/test_examples.py --run-examples`), per
-`design/feat/20260720-0950-optional-run-examples.md`. **No CECE file was
+`design/feat/20260720-0950-optional-run-examples/20260720-0950-optional-run-examples.md`. **No CECE file was
 modified**; every fix below is prescribed, not applied.
 
 - CECE checkout: `/Users/bkoziol/sandbox/git-benkozi/CECE`, branch
@@ -16,7 +16,7 @@ modified**; every fix below is prescribed, not applied.
 > *last* fetch only — ex2's EMEP fetch (404: EMEP is not in the bucket)
 > and ex6's EDGAR fetch (404: `v2014-10` does not exist) failed silently
 > behind later successful fetches. Discovered and fixed during
-> `design/fix/20260720-1500-fix-cece-examples.md` (scripts now use
+> `design/fix/20260720-1500-fix-cece-examples/20260720-1500-fix-cece-examples.md` (scripts now use
 > `set -euo pipefail`).
 
 ## 1. Data downloads — all six succeeded
