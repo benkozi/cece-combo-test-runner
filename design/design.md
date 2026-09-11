@@ -457,8 +457,11 @@ exit is the failure condition. The environment variables mirror `setup.sh`
   the host. If it does and `--combo-clean-root` was not given, the session
   fails immediately with a clear message — prior results are never silently
   mixed with or overwritten by a new run. With `--combo-clean-root`, the
-  existing root is deleted wholesale and recreated. The rmtree targets only
-  the resolved output root, never its parent. The default temp root needs no
+  existing root is deleted wholesale and recreated — but only when it is a
+  previous harness root (`run.yaml` at its top); any other directory is
+  refused, because an absolute root under the native/slurm runtimes can
+  point anywhere. The rmtree targets only the resolved output root, never
+  its parent. The default temp root needs no
   guard: `tmp_path_factory` allocates a fresh directory every session.
 - **Selection**: `pytest -k <expr>` against the combo-name ids runs subsets.
 

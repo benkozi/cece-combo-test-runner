@@ -189,3 +189,34 @@ def test_platform_override_changes_runtime_exports() -> None:
     text = render_stage(Stage.HARNESS, config).text
     assert "export CECE_PLATFORM=local" in text
     assert "export CECE_RUNTIME=docker" in text
+
+
+def test_harness_stage_exports_the_queue_allowance_under_slurm_only(
+    ursa: RunConfig, local: RunConfig, tmp_path: Path
+) -> None:
+    assert (
+        "export CECE_SLURM_QUEUE_WAIT_S=3600" in render_stage(Stage.HARNESS, ursa).text
+    )
+    assert "CECE_SLURM_QUEUE_WAIT_S" not in render_stage(Stage.HARNESS, local).text
+    long_wait = RunConfig.from_yaml(
+        run_config_file(
+            tmp_path, overrides={"slurm.queue_wait_s": 28800}, root_dir=_URSA_ROOT
+        )
+    )
+    assert (
+        "export CECE_SLURM_QUEUE_WAIT_S=28800"
+        in render_stage(Stage.HARNESS, long_wait).text
+    )
+
+
+def test_regex_suite_selector_survives_quoting(tmp_path: Path) -> None:
+    # Several suites in one session: the selector is a regex, every match runs.
+    config = RunConfig.from_yaml(
+        run_config_file(
+            tmp_path,
+            overrides={"harness.suite_config": "ex[0-9]-suite.yaml"},
+            root_dir=_URSA_ROOT,
+        )
+    )
+    text = render_stage(Stage.HARNESS, config).text
+    assert "'--suite-config=ex[0-9]-suite.yaml'" in text

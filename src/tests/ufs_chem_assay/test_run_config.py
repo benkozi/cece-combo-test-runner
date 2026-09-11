@@ -145,3 +145,8 @@ def test_root_dir_is_required_on_direct_validation() -> None:
         RunConfig.model_validate(
             {"platform": "local", "cece": {"git_url": "u", "ref": "r"}}
         )
+
+
+def test_slurm_queue_wait_defaults_and_renders() -> None:
+    config = RunConfig.from_yaml(TEMPLATES_DIR / "ursa.yaml")
+    assert config.slurm is not None and config.slurm.queue_wait_s == 3600

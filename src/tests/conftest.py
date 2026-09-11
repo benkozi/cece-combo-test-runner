@@ -126,7 +126,10 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--combo-clean-root",
         action="store_true",
-        help="Remove an existing output root before running (default: existing root is an error).",
+        help=(
+            "Remove an existing output root before running (default: existing root "
+            "is an error). Only a previous harness root — one with run.yaml — is removed."
+        ),
     )
     group.addoption(
         "--dry-run",
@@ -247,12 +250,20 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         except ValueError as exc:
             raise pytest.UsageError(str(exc)) from exc
         if host_root.exists():
-            if config.getoption("--combo-clean-root"):
-                shutil.rmtree(host_root)
-            else:
+            if not config.getoption("--combo-clean-root"):
                 raise pytest.UsageError(
                     f"output root {host_root} already exists; move it aside or pass --combo-clean-root"
                 )
+            # Only a previous harness output root (run.yaml at its top) is
+            # ever removed: an absolute output root under native/slurm can
+            # point anywhere, and --combo-clean-root must not be a way to
+            # delete an arbitrary directory.
+            if not (host_root / "run.yaml").is_file():
+                raise pytest.UsageError(
+                    f"output root {host_root} exists but is not a previous harness "
+                    "output root (no run.yaml); refusing --combo-clean-root — move it aside"
+                )
+            shutil.rmtree(host_root)
         roots = ComboRoots(host=host_root, driver=driver_root, needs_mount=False)
 
     config.stash[_SETTINGS] = settings

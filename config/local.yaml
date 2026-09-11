@@ -10,7 +10,7 @@ cece:
   git_url: git@github.com:benkozi/CECE.git
   ref: fix/all-examples-pass
   clone_dir:  # default <root_dir>/CECE; point at your sandbox checkout instead
-  update_source: false
+  update_source: false  # true: fetch, checkout ref, pull --ff-only, submodule update --init --recursive
   modulefile:  # none locally
   cmake_args: []  # unused: the container build script owns the configure
   build_jobs: 4
@@ -24,9 +24,9 @@ baselines:
   root_dir:
   enabled: false
 harness:
-  suite_config: simple-maccity-suite.yaml
-  output_root: ufs-chem-assay-output
-  clean_root: true
+  suite_config: simple-maccity-suite.yaml  # regex; every match runs, e.g. 'ex[0-9]-suite.yaml'
+  output_root: ufs-chem-assay-output  # relative: under the checkout (docker: must stay there)
+  clean_root: true  # removes only a previous harness root (one with run.yaml)
   pytest_args: []
   launcher: ''  # unused under docker
   env: {}

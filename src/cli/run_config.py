@@ -31,9 +31,10 @@ class CeceSection(StrictModel):
     update_source: bool = Field(
         default=False,
         description=(
-            "Sync an existing clone to ref: fetch, checkout, pull --ff-only, "
-            "submodule update. Never destructive — a dirty or diverged clone "
-            "makes git fail"
+            "false: an existing clone is used as-is, no git command touches it. "
+            "true: git fetch, checkout ref, pull --ff-only, then submodule update "
+            "--init --recursive. Never destructive — a dirty or diverged clone "
+            "makes git fail. A missing clone is always cloned --recurse-submodules"
         ),
     )
     modulefile: str | None = Field(
@@ -83,11 +84,20 @@ class HarnessSection(StrictModel):
     model_config = ConfigDict(extra="forbid", coerce_numbers_to_str=True)
 
     suite_config: str = Field(
-        default="simple-maccity-suite.yaml", description="--suite-config selector"
+        default="simple-maccity-suite.yaml",
+        description=(
+            "--suite-config selector: a regex fullmatched against suite file "
+            "names; every match runs in one session (e.g. 'ex[0-9]-suite.yaml')"
+        ),
     )
     output_root: str = Field(
         default="ufs-chem-assay-output",
-        description="--combo-output-root; relative paths land under the CECE checkout",
+        description=(
+            "--combo-output-root: relative paths land under the application "
+            "checkout; absolute paths are written anywhere the runtime can "
+            "(docker: under the checkout mount only). clean_root only ever "
+            "removes a previous harness root (one with run.yaml)"
+        ),
     )
     clean_root: bool = Field(default=True, description="Pass --combo-clean-root")
     pytest_args: list[str] = Field(
@@ -128,6 +138,16 @@ class SlurmSection(StrictModel):
     qos: str = Field(default="batch", description="sbatch -q")
     partition: str = Field(default="u1-compute", description="sbatch -p")
     cpus: int = Field(default=8, gt=0, description="sbatch -c for each driver job")
+    queue_wait_s: int = Field(
+        default=3600,
+        gt=0,
+        description=(
+            "CECE_SLURM_QUEUE_WAIT_S: seconds a driver job may wait in the queue "
+            "before the harness cancels it; added to the suite timeout for the "
+            "outer bound (the job's own limit is the suite timeout). Raise it for "
+            "the batch QOS, where waits can be hours"
+        ),
+    )
 
     @property
     def sbatch_args(self) -> str:

@@ -181,6 +181,7 @@ def _harness(config: RunConfig) -> list[str]:
     if config.runtime is Runtime.SLURM:
         assert config.slurm is not None, "slurm runtime needs a slurm: section"
         exports.append(("CECE_SBATCH_ARGS", _q(config.slurm.sbatch_args)))
+        exports.append(("CECE_SLURM_QUEUE_WAIT_S", str(config.slurm.queue_wait_s)))
         if config.cece.modulefile is not None:
             exports.append(("CECE_MODULEFILE", _q(config.cece.modulefile)))
         if harness.env:

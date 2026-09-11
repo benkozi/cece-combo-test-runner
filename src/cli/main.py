@@ -17,7 +17,7 @@ from platforms import Platform
 logger = get_logger("cli")
 
 # Script file numbering: fixed slots in the canonical order, so the harness
-# stage is always 05 (slot 04 is held for the CECE-tests stage of issue #9).
+# stage is always 05 (slot 04 is held for the application's own tests, issue #9).
 _INDEX = {Stage.SOURCE: 1, Stage.BUILD: 2, Stage.DATA: 3, Stage.HARNESS: 5}
 
 
@@ -26,8 +26,8 @@ def _parser() -> argparse.ArgumentParser:
         prog="ufs-chem-assay",
         description=(
             "Assemble and execute a harness run from one YAML run config: "
-            "CECE source, driver build, data, the pytest session — on this "
-            "node; under the slurm runtime the driver runs are Slurm jobs."
+            "target-driver source and build, input data, the pytest session — "
+            "on this node; under the slurm runtime each driver run is a Slurm job."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)

@@ -1,5 +1,5 @@
-"""The `ufs-chem-assay` entrypoint: assembles a run — CECE source, native
-or container build, data staging, CECE unit tests, the harness session —
-from one YAML run config, directly or as a Slurm batch job. It renders shell
-scripts and executes them; pytest stays the test entry point and no test
-logic lives here."""
+"""The `ufs-chem-assay` entrypoint: assembles a run of the application under
+test — source checkout, target-driver build, input data, the pytest
+session — from one YAML run config, rendering shell scripts and executing
+them on this node. pytest stays the test entry point; no test logic lives
+here."""

@@ -11,14 +11,16 @@ statistics/plotting analysis step. Design rationale lives in
 
 ## Prerequisites
 
-- A local checkout of the CECE repository (this runner lives in its own
-  repository; the CECE checkout is external), with:
+- A local checkout of the application under test (this harness lives in
+  its own repository; the application checkout is external). The harness
+  targets CECE today — its settings, driver path, and image names are
+  CECE's; generalizing them is the `Application` adapter follow-up. With:
   - Docker and the `cece/cece-dev` image available locally (build it via
-    `./setup.sh` in the CECE checkout) — or, on a machine without docker
-    such as Ursa, the driver built natively against the checkout's
+    `./setup.sh` in the checkout) — or, on a machine without docker such
+    as Ursa, the target driver built natively against the checkout's
     modulefiles (see [Running on RDHPC](#running-on-rdhpc-ursa));
-  - the driver built at `./build/cece_standalone_driver` (relative to the
-    CECE checkout root).
+  - the target driver built at `./build/cece_standalone_driver` (relative
+    to the checkout root).
 - [uv](https://docs.astral.sh/uv/) installed.
 
 ## Setup
@@ -187,7 +189,10 @@ Options:
   pytest-managed temporary directory (nothing is written to the checkout).
 - `--combo-clean-root` — with an explicit `--combo-output-root`, remove an
   existing output root before running. Without it, an existing root is an
-  error — prior results are never mixed with a new run.
+  error — prior results are never mixed with a new run. Only a previous
+  harness root (one with `run.yaml` at its top) is ever removed; any other
+  existing directory is refused, since an absolute root under the native
+  or slurm runtime can point anywhere.
 - `--run-examples` — run the CECE checkout's shipped
   `examples/config/cece_config_ex*.yaml` via the checkout's
   `examples/run-example.py` entrypoint, docker-wrapped by this runner
@@ -204,10 +209,10 @@ Options:
 
 ## Running on RDHPC (Ursa)
 
-RDHPCS machines have no docker, so the driver is built natively against
-CECE's own modulefiles (`<CECE>/modulefiles/cece_ursa.*.lua`), and the
-harness runs on a **login node** submitting **one Slurm job per driver
-call** — the **slurm runtime**, selected by `CECE_RUNTIME=slurm` (the
+RDHPCS machines have no docker, so the target driver is built natively
+against the application's own modulefiles (`<checkout>/modulefiles/cece_ursa.*.lua`
+for CECE), and the harness runs on a **login node** submitting **one
+Slurm job per driver call** — the **slurm runtime**, selected by `CECE_RUNTIME=slurm` (the
 default once `CECE_PLATFORM` is anything but `local`; the platform is
 detected from the hostname and overridable). Each job is
 a rendered script, `<combo_id>.sbatch`, kept beside the combo's `.yaml`
@@ -390,7 +395,7 @@ environment variables override `.env`, and `--cece-root-dir` overrides both.
 | `CECE_RUNTIME`                  | how the driver is spawned (`docker`, `native`, `slurm`) | `docker` on `local`, `slurm` elsewhere |
 | `CECE_LAUNCHER`                 | command prefix for native driver runs (e.g. `srun --ntasks=1`) | empty (run directly) |
 | `CECE_SBATCH_ARGS`              | slurm runtime: sbatch options per driver job (`-A … -q … -p … -N 1 -n 1 -c …`) | empty |
-| `CECE_SLURM_QUEUE_WAIT_S`       | slurm runtime: queue allowance added to the suite timeout for the outer bound | `3600` |
+| `CECE_SLURM_QUEUE_WAIT_S`       | slurm runtime: seconds a driver job may wait in the queue before the harness cancels it (the run config's `slurm.queue_wait_s`) | `3600` |
 | `CECE_JOB_ENV`                  | slurm runtime: `NAME=VALUE` pairs exported inside each driver job | empty |
 | `CECE_MODULEFILE`               | CECE modulefile each driver job loads before the driver (recorded in `run.yaml`) | unset |
 | `CECE_DOCKER_IMAGE`             | container image (docker runtime)               | `cece/cece-dev`              |
