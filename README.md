@@ -11,18 +11,23 @@ statistics/plotting analysis step. Design rationale lives in
 
 ## Prerequisites
 
-- A local checkout of the CECE repository (this runner lives in its own
-  repository; the CECE checkout is external), with:
+- A local checkout of the application under test (this harness lives in
+  its own repository; the application checkout is external). The harness
+  targets CECE today — its settings, driver path, and image names are
+  CECE's; generalizing them is the `Application` adapter follow-up. With:
   - Docker and the `cece/cece-dev` image available locally (build it via
-    `./setup.sh` in the CECE checkout);
-  - the driver built at `./build/cece_standalone_driver` (relative to the
-    CECE checkout root).
+    `./setup.sh` in the checkout) — or, on a machine without docker such
+    as Ursa, the target driver built natively against the checkout's
+    modulefiles (see [Running on RDHPC](#running-on-rdhpc-ursa));
+  - the target driver built at `./build/cece_standalone_driver` (relative
+    to the checkout root).
 - [uv](https://docs.astral.sh/uv/) installed.
 
 ## Setup
 
 ```sh
-uv sync                       # includes dev tools (mypy, pre-commit, stubs)
+uv sync                       # includes dev tools (mypy, pre-commit, stubs) and
+                              #   installs the `ufs-chem-assay` command (editable)
 uv run pre-commit install     # ruff check/format + mypy on every commit, plus
                               #   the conventional-commit message gate (the
                               #   commit-msg hook type installs automatically)
@@ -106,8 +111,10 @@ the coordinate; `validate_dimensions: false` skips it), `test_species_attributes
 configured species; `exact: true` — the default — requires the dictionaries
 to match exactly, `exact: false` checks the expectation as a subset; per
 value, `null` asserts absence and `"__ignore__"` allows any value),
-`test_descriptive_stats` (per-NetCDF statistics via distributed dask,
-written to `<combo_id>-stats.csv`; all combos concatenated into
+`test_descriptive_stats` (per-NetCDF statistics via distributed dask for
+every spatial field — a data variable carrying both `lat` and `lon`; CF
+cell bounds and other auxiliary tables are skipped — written to
+`<combo_id>-stats.csv`; all combos concatenated into
 `descriptive_stats.csv` at the output root when the session ends), and
 `test_baseline_comparison` (nccmp-style comparison against a per-combination
 baseline: each `baseline_comparisons` entry carries a `sweep_selector` —
@@ -176,12 +183,16 @@ Options:
   explicit `--combo-output-root`); missing or nonexistent paths fail
   immediately, before any test runs.
 - `--combo-output-root=PATH` — root artifact directory; relative paths
-  resolve against `/work` in the container, so results persist in the CECE
-  checkout. Default: a pytest-managed temporary directory (nothing is
-  written to the checkout).
+  resolve against the CECE checkout (mounted at `/work` under docker), so
+  results persist there. Under docker an absolute path must lie under
+  `/work`; natively any absolute host path works. Default: a
+  pytest-managed temporary directory (nothing is written to the checkout).
 - `--combo-clean-root` — with an explicit `--combo-output-root`, remove an
   existing output root before running. Without it, an existing root is an
-  error — prior results are never mixed with a new run.
+  error — prior results are never mixed with a new run. Only a previous
+  harness root (one with `run.yaml` at its top) is ever removed; any other
+  existing directory is refused, since an absolute root under the native
+  or slurm runtime can point anywhere.
 - `--run-examples` — run the CECE checkout's shipped
   `examples/config/cece_config_ex*.yaml` via the checkout's
   `examples/run-example.py` entrypoint, docker-wrapped by this runner
@@ -195,6 +206,51 @@ Options:
   downloads 404 until local copies are placed in the checkout's `data/`. Outcomes land under the output root in `examples/`
   (`<stem>.out` per example plus a session `examples-report.md`); they
   are not part of `test-report.csv`.
+
+## Running on RDHPC (Ursa)
+
+RDHPCS machines have no docker, so the target driver is built natively
+against the application's own modulefiles (`<checkout>/modulefiles/cece_ursa.*.lua`
+for CECE), and the harness runs on a **login node** submitting **one
+Slurm job per driver call** — the **slurm runtime**, selected by `CECE_RUNTIME=slurm` (the
+default once `CECE_PLATFORM` is anything but `local`; the platform is
+detected from the hostname and overridable). Each job is
+a rendered script, `<combo_id>.sbatch`, kept beside the combo's `.yaml`
+and `.out` so a failed job is reproducible by hand: `#SBATCH` directives
+from `CECE_SBATCH_ARGS` (account, QOS, partition, cpus) and the suite's
+`timeout_s` rounded up to whole minutes, the `CECE_MODULEFILE` load,
+the `CECE_JOB_ENV` exports, and the driver behind `srun --ntasks=1`
+(MPI inside a batch job needs Slurm's PMI endpoint). Two environments stay apart on
+purpose: the harness venv never sees the modulefile (spack-stack's
+`PYTHONPATH` would shadow its numpy), the driver always does. Analysis
+runs in the pytest process, so cap `CECE_DASK_NWORKERS` on a login node.
+`CECE_RUNTIME=native` runs the driver as a direct host process with
+`CECE_LAUNCHER` as an optional prefix — for a docker-less machine whose
+shell already suits both the harness and the driver; not Ursa, where the
+two environments conflict.
+
+`ufs-chem-assay run` assembles all of that from one YAML run config:
+
+```sh
+# the shipped template runs as-is: root_dir is derived as the parent of this
+# checkout ($ROOT/ufs-chem-assay beside $ROOT/CECE); --root-dir overrides it
+uv run ufs-chem-assay run --config-file=config/ursa.yaml --dry-run   # render only
+uv run ufs-chem-assay run --config-file=config/ursa.yaml             # clone, build,
+                                                                     #   data, harness
+uv run ufs-chem-assay run --config-file=config/ursa.yaml --stage harness
+```
+
+Stages (`--stage`, repeatable): `source` (clone or fast-forward CECE),
+`build` (modules + cmake, or CECE's container build script locally),
+`data` (example downloads, cartopy cache), `harness` (the pytest
+session). Running CECE's own tests is a separate task (issue #9).
+Each renders to `<root_dir>/scripts/<NN>-<stage>.sh` and runs with bash
+where the CLI runs; logs land in `<root_dir>/logs/`. Run the harness
+stage under `tmux` — it lives as long as the suite. The CLI never
+deletes anything except the harness output root (`clean_root`), and
+never mutates an existing checkout without `update_source`.
+
+The same steps by hand are in [docs/ursa-runbook.md](docs/ursa-runbook.md).
 
 ## CI and releases
 
@@ -312,7 +368,8 @@ different runs stay distinguishable. It is never set via configuration;
 unknown keys in suite or driver config files are rejected at load time.
 
 Spatial plots render at session end (suite `plotting.enabled`, default on;
-`gif_enabled` controls the per-variable GIF). All plots of a variable share
+`gif_enabled` controls the per-variable GIF), one per spatial field — the
+same lat/lon rule as the statistics. All plots of a variable share
 one **exact suite-wide min/max color scale** derived from the descriptive
 statistics — so plotting requires `compute_descriptive_stats`. First-time
 boundary rendering downloads Natural Earth coastline/border data; offline,
@@ -334,7 +391,14 @@ environment variables override `.env`, and `--cece-root-dir` overrides both.
 
 | Env var                         | Meaning                                        | Default                          |
 |---------------------------------|------------------------------------------------|----------------------------------|
-| `CECE_DOCKER_IMAGE`             | container image                                | `cece/cece-dev`              |
+| `CECE_PLATFORM`                 | machine the harness runs on (`local`, `ursa`)  | detected from the hostname, else `local` |
+| `CECE_RUNTIME`                  | how the driver is spawned (`docker`, `native`, `slurm`) | `docker` on `local`, `slurm` elsewhere |
+| `CECE_LAUNCHER`                 | command prefix for native driver runs (e.g. `srun --ntasks=1`) | empty (run directly) |
+| `CECE_SBATCH_ARGS`              | slurm runtime: sbatch options per driver job (`-A … -q … -p … -N 1 -n 1 -c …`) | empty |
+| `CECE_SLURM_QUEUE_WAIT_S`       | slurm runtime: seconds a driver job may wait in the queue before the harness cancels it (the run config's `slurm.queue_wait_s`) | `3600` |
+| `CECE_JOB_ENV`                  | slurm runtime: `NAME=VALUE` pairs exported inside each driver job | empty |
+| `CECE_MODULEFILE`               | CECE modulefile each driver job loads before the driver (recorded in `run.yaml`) | unset |
+| `CECE_DOCKER_IMAGE`             | container image (docker runtime)               | `cece/cece-dev`              |
 | `CECE_ROOT_DIR`                 | host CECE checkout root mounted at /work       | unset — required to run the driver; `--cece-root-dir` overrides |
 | `CECE_DRIVER_PATH`              | driver path inside the container               | `./build/cece_standalone_driver` |
 | `CECE_RUN_TIMEOUT_S`            | caps the suite `timeout_s` when smaller        | `300`                            |

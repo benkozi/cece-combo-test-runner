@@ -18,6 +18,9 @@ def _run_pytest(
     args: list[str], cwd: Path, env_overrides: dict[str, str] | None = None
 ) -> subprocess.CompletedProcess[str]:
     env = {k: v for k, v in os.environ.items() if not k.startswith("CECE_")}
+    # Explicit platform: the child cannot inherit the in-process hostname
+    # patch, and on an RDHPC login node detection would pick that machine.
+    env["CECE_PLATFORM"] = "local"
     env |= env_overrides or {}
     return subprocess.run(
         [
@@ -122,3 +125,39 @@ def test_non_git_root_dir_is_usage_error(tmp_path: Path) -> None:
     assert result.returncode == _USAGE_ERROR, result.stdout + result.stderr
     assert str(plain) in result.stderr
     assert "git" in result.stderr
+
+
+def test_clean_root_refuses_a_directory_that_is_not_a_harness_root(
+    tmp_path: Path,
+) -> None:
+    """--combo-clean-root only ever removes a previous harness output root
+    (one with run.yaml at its top); anything else is refused untouched —
+    an absolute output_root under native/slurm can point anywhere."""
+    _git_checkout(tmp_path)
+    foreign = tmp_path / "combo_runs"
+    foreign.mkdir()
+    (foreign / "precious.txt").write_text("keep me")
+    result = _run_pytest(
+        ["--dry-run", "--combo-output-root=combo_runs", "--combo-clean-root"],
+        tmp_path,
+        {"CECE_ROOT_DIR": str(tmp_path)},
+    )
+    assert result.returncode == _USAGE_ERROR, result.stdout + result.stderr
+    assert "run.yaml" in result.stderr
+    assert (foreign / "precious.txt").read_text() == "keep me"
+
+
+def test_clean_root_removes_a_previous_harness_root(tmp_path: Path) -> None:
+    _git_checkout(tmp_path)
+    previous = tmp_path / "combo_runs"
+    previous.mkdir()
+    (previous / "run.yaml").write_text("run_id: old\n")
+    (previous / "stale.txt").write_text("x")
+    result = _run_pytest(
+        ["--dry-run", "--combo-output-root=combo_runs", "--combo-clean-root"],
+        tmp_path,
+        {"CECE_ROOT_DIR": str(tmp_path)},
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not (previous / "stale.txt").exists()
+    assert (previous / "run.yaml").is_file()  # the new run's manifest

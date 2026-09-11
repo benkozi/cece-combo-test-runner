@@ -1,4 +1,4 @@
-# Exhaustive run-only suite (design/feat/20260716-1647-exhaustive-maccity.md).
+# Exhaustive run-only suite (design/feat/20260716-1647-exhaustive-maccity/20260716-1647-exhaustive-maccity.md).
 # Sweep values are regexes: ".*" expands (fullmatch) to every enum value at
 # load time, so this suite never needs editing as enums grow. Everything but
 # the driver-exit assertion is off — pass/fail per combination is the only

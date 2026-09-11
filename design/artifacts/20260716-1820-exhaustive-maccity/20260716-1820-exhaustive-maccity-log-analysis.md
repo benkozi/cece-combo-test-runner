@@ -1,6 +1,6 @@
 # Exhaustive maccity execution audit — log analysis report
 
-Spike: `design/spike/20260716-1820-analyze-exhaustive-maccity-logs.md`.
+Spike: `design/spike/20260716-1820-analyze-exhaustive-maccity-logs/20260716-1820-analyze-exhaustive-maccity-logs.md`.
 First real execution of the exhaustive sweep; question under test: *the
 driver says it works — does it?* Scope is execution evidence only (exit
 codes, logs, file existence, byte-level output identity); no NetCDF value

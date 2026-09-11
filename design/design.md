@@ -19,21 +19,25 @@ is used consistently everywhere: `HARNESS_NAME` in `src/logs.py` (logger
 namespace, plot footer), the `pyproject.toml` name, the image tags, the CI
 output root, and — underscored, because mypy requires a valid package name —
 the harness test package `src/tests/ufs_chem_assay/`. See
-`design/spike/20260901-1229-rename-and-plan-for-catchem.md` and
-`design/feat/20260901-1701-rename-repo.md`.
+`design/spike/20260901-1229-rename-and-plan-for-catchem/20260901-1229-rename-and-plan-for-catchem.md` and
+`design/feat/20260901-1701-rename-repo/20260901-1701-rename-repo.md`.
 
 ## Non-goals
 
-- No standalone CLI — pytest's command line is the only entry point.
+- pytest's command line is the *test* entry point. The `ufs-chem-assay
+  run` command (`src/cli/`, 2026-09-03) orchestrates environment, CECE
+  build, data, and the pytest invocation from one run config — it never
+  re-implements test logic (see
+  `design/feat/20260903-1453-run-on-rdhpc/20260903-1453-run-on-rdhpc.md`).
 - No dependency on existing CECE Python infrastructure; the runner lives in
   its **own repository** with its own `uv`-managed environment. The CECE
   checkout (driver build, input data) is external, located via the
   `root_dir` setting (`--cece-root-dir` flag or `CECE_ROOT_DIR` env var)
   and mounted at `/work` in the driver container (see
-  `design/fix/20260717-1029-portability-external-cece.md`).
+  `design/fix/20260717-1029-portability-external-cece/20260717-1029-portability-external-cece.md`).
 - No online baseline retrieval or baseline manifest yet — baselines are
   local directories keyed by ULID (see
-  `design/feat/20260716-1113-compare-with-baseline.md`); no stats-CSV
+  `design/feat/20260716-1113-compare-with-baseline/20260716-1113-compare-with-baseline.md`); no stats-CSV
   diffing (the comparison targets the NetCDF files themselves).
 
 ## Suite configuration
@@ -106,7 +110,7 @@ against the enum's values into the sorted matching list at load time — so
 suite was written, and `run.yaml` records the expanded list (the run stays
 reproducible as enums grow). A regex matching nothing, like an invalid one,
 fails the load. See
-`design/feat/20260716-1647-exhaustive-maccity.md`, whose
+`design/feat/20260716-1647-exhaustive-maccity/20260716-1647-exhaustive-maccity.md`, whose
 `exhaustive-maccity-run-only-suite.yaml` sweeps `".*"` on every
 driver-meaningful dimension and pins the inert `category` label to
 `undefined` (240 combinations, run on demand — typically with `--dry-run`
@@ -116,12 +120,12 @@ Duplicate sweep values, duplicate stream names, and unknown keys are all
 rejected at load; sweep selectors (stream names, species keys, entry counts)
 are validated against the loaded base config at session start, before any
 container runs. See
-`design/feat/20260709-1131-attach-sweeps-to-streams.md`.
+`design/feat/20260709-1131-attach-sweeps-to-streams/20260709-1131-attach-sweeps-to-streams.md`.
 
 A suite file fully describes a run: which base scenario (`config_path`),
 the per-combination timeout, and which sweep. Full `config_path` resolution
 and timeout semantics live in
-`design/feat/20260707-1515-use-cece-config-directory.md`.
+`design/feat/20260707-1515-use-cece-config-directory/20260707-1515-use-cece-config-directory.md`.
 
 `sweep:` is optional: a suite attaching no dimensions runs its base config
 as the single combination named `base` (its id a runtime ULID like every
@@ -134,7 +138,7 @@ the full pipeline; using such a suite without a configured root is the
 standard root-dir usage error. Generated combo configs also always point
 `driver.log_file` into the combo's output directory, so no base config —
 the examples set relative paths — can write a log into the checkout. See
-`design/feat/20260724-0907-examples-as-suites.md`.
+`design/feat/20260724-0907-examples-as-suites/20260724-0907-examples-as-suites.md`.
 
 Reusing the enums from `cece_config.py` means invalid values fail at suite-load
 time with a pydantic error, before any container runs.
@@ -161,7 +165,7 @@ Each swept dimension attaches to an explicit target; the sweep says where:
 | `Mapalgo`     | 6      | a stream, selected by `name`                   |
 
 The enum values are hand-mirrored from the driver C++ (audited in
-`design/feat/20260716-1647-exhaustive-maccity.md`): `Mapalgo` holds only the
+`design/feat/20260716-1647-exhaustive-maccity/20260716-1647-exhaustive-maccity.md`): `Mapalgo` holds only the
 regridder's canonical values (`passthrough, nn, bilinear, cubic, conss,
 consd` — unknown strings silently regrid with the default method, so no
 others may exist here) and `VdistMethod` holds the parser's lowercase
@@ -208,7 +212,7 @@ combo, one row per sweepable dimension (per-stream
 generated config and a `swept` flag — so pinned parameters and sweep-less
 `base` combos join exactly like swept ones (within a run on `combo_id`,
 across runs on `suite` + `combo` name or the parameter columns). See
-`design/feat/20260724-1013-run-multiple-suite-configs.md`.
+`design/feat/20260724-1013-run-multiple-suite-configs/20260724-1013-run-multiple-suite-configs.md`.
 
 ## Base configuration
 
@@ -299,7 +303,26 @@ session and can never pre-exist.
 
 ## Execution model
 
-Each combination runs independently in a fresh container using the image built
+Three **runtimes** (`settings.runtime`, `src/platforms.py`): `docker`, the
+default on the `local` platform and described first below; `slurm`, the
+default on every other platform (RDHPC machines have no docker) — pytest
+runs on a login node and each driver call is one `sbatch --wait` job
+from a rendered `<combo_id>.sbatch` (Jinja2 template) kept beside the
+combo's artifacts — directives, `CECE_MODULEFILE` load, `CECE_JOB_ENV`,
+and the driver behind `srun --ntasks=1` — so the harness venv never sees
+the module environment and a failed job is reproducible by hand; and
+`native` — the driver as a host process, `cwd` = the CECE checkout,
+prefixed by the `launcher` setting, for a session inside an allocation. The platform is detected from the
+hostname (`CECE_PLATFORM` overrides; `local` when nothing matches) and
+`run.yaml` records `platform`, `runtime`, and `modulefile`. The path model is one
+abstraction: `ComboRoots.driver` is the output root *as the driver sees
+it* — a container path under docker, the host path natively — and
+generated configs carry it in `output.directory` and `driver.log_file`.
+The base config's data path is cwd-relative (`data/MACCity_4x5.nc`) so
+it resolves under both runtimes. See
+`design/feat/20260903-1453-run-on-rdhpc/20260903-1453-run-on-rdhpc.md`.
+
+Under docker each combination runs independently in a fresh container using the image built
 by `setup.sh` (`cece/cece-dev`, assumed already built — the runner never
 builds it). One driver invocation per container, container removed on exit
 (`--rm`):
@@ -348,7 +371,7 @@ exit is the failure condition. The environment variables mirror `setup.sh`
   fixture that captures the outcome without raising; `test_driver_execution`
   asserts exit 0, and each post-run assertion (`test_nc_file_count`, …) is
   its own test that skips explicitly when the run failed. See
-  `design/feat/20260708-1055-add-assertions-for-file-counts.md`.
+  `design/feat/20260708-1055-add-assertions-for-file-counts/20260708-1055-add-assertions-for-file-counts.md`.
 - **Fail fast vs. continue** uses pytest built-ins — no custom flags.
   **Continue is the default and the desired behavior**: a plain `pytest`
   invocation runs every combination to completion regardless of individual
@@ -396,7 +419,7 @@ exit is the failure condition. The environment variables mirror `setup.sh`
     `--dst-dir <root>/data` (a failing download is logged and recorded,
     never fatal). All
     examples are expected green since the consolidation fix
-    (`design/fix/20260720-1500-fix-cece-examples.md`). ex1/ex7's
+    (`design/fix/20260720-1500-fix-cece-examples/20260720-1500-fix-cece-examples.md`). ex1/ex7's
     CAMS-TEMPO inputs have no public download source yet: they run from
     local `data/` copies, and their download-script fetches 404 on a
     fresh machine until the data is published.
@@ -434,8 +457,11 @@ exit is the failure condition. The environment variables mirror `setup.sh`
   the host. If it does and `--combo-clean-root` was not given, the session
   fails immediately with a clear message — prior results are never silently
   mixed with or overwritten by a new run. With `--combo-clean-root`, the
-  existing root is deleted wholesale and recreated. The rmtree targets only
-  the resolved output root, never its parent. The default temp root needs no
+  existing root is deleted wholesale and recreated — but only when it is a
+  previous harness root (`run.yaml` at its top); any other directory is
+  refused, because an absolute root under the native/slurm runtimes can
+  point anywhere. The rmtree targets only the resolved output root, never
+  its parent. The default temp root needs no
   guard: `tmp_path_factory` allocates a fresh directory every session.
 - **Selection**: `pytest -k <expr>` against the combo-name ids runs subsets.
 
@@ -506,9 +532,9 @@ coupling. `design/` (records, not maintained code) and `uv.lock`
 `config_search_path`, when set, overrides normal config resolution: the
 search directory is prepended to the suite's relative `config_path`, kept
 whole so nested directories work (full semantics in
-`design/feat/20260707-1515-use-cece-config-directory.md`; that doc's
+`design/feat/20260707-1515-use-cece-config-directory/20260707-1515-use-cece-config-directory.md`; that doc's
 **suite-side** prepend semantics are superseded by the regex selector —
-see `design/feat/20260717-1052-default-suite.md`). `suite_config_search_path`
+see `design/feat/20260717-1052-default-suite/20260717-1052-default-suite.md`). `suite_config_search_path`
 feeds the selector's search roots as described under Pytest integration.
 
 ## Code layout
@@ -520,12 +546,18 @@ All code under `src/`; the project is `uv`-managed with its own
 <repo root>/
   pyproject.toml          # uv project: pytest, pytest-mock, pydantic>=2, pydantic-settings, pyyaml
   README.md               # user-facing setup + run instructions
+  docs/ursa-runbook.md    # manual native run on Ursa (what the CLI automates)
+  config/                 # run-config templates: local.yaml (docker), ursa.yaml (native + slurm)
   design/design.md
   src/
     models/
       base.py             # StrictModel: extra="forbid" base for all config models
       cece_config.py      # existing pydantic model of the driver config
       suite_config.py     # SuiteConfig / Sweep / RunManifest models + YAML loader
+    cli/                  # `ufs-chem-assay run`: run config model, stage scripts,
+                          #   bash/sbatch execution (console script via hatchling)
+    platforms.py          # Platform / Runtime enums, hostname detection
+    templates/driver-job.sbatch.j2  # the slurm runtime's per-driver job script
     analysis.py           # descriptive stats (dask distributed), CSV writing
     assertions.py         # post-run assertions (NetCDF file count, filenames)
     combos.py             # sweep → combinations, combo naming, config generation
@@ -534,8 +566,8 @@ All code under `src/`; the project is `uv`-managed with its own
     plotting.py           # session-end spatial plots + GIFs (cartopy/matplotlib)
     report.py             # test-report.csv: row model, outcome precedence, writer
     resolution.py         # pure path-resolution rules (suite path, output roots)
-    runner.py             # docker run construction, check_output, .out writing,
-                          #   DriverRunResult
+    runner.py             # driver command per runtime (docker run / native +
+                          #   launcher), check_output, .out writing, DriverRunResult
     settings.py           # pydantic-settings
     tests/
       config/
@@ -584,7 +616,7 @@ there.
 
 ## CI and releases
 
-Full rationale in `design/feat/20260724-1449-basic-ci.md`; the load-bearing
+Full rationale in `design/feat/20260724-1449-basic-ci/20260724-1449-basic-ci.md`; the load-bearing
 mechanics:
 
 - **One toolchain image** (`Dockerfile`, context allowlisted by

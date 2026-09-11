@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from combos import enumerate_combos
 from models.cece_config import Category, CeceConfig, Mapalgo, VdistMethod
+from platforms import Platform, Runtime
 from models.suite_config import (
     Assertions,
     AttributesAssertion,
@@ -231,7 +232,7 @@ def test_unknown_nested_cece_config_key_rejected(
 
 
 # ── Enum ground truth (mirrors the C++ driver; hand-maintained, so asserted
-# here — see design/feat/20260716-1647-exhaustive-maccity.md) ────────────────
+# here — see design/feat/20260716-1647-exhaustive-maccity/20260716-1647-exhaustive-maccity.md) ────────────────
 
 
 def test_mapalgo_matches_driver_canonical_values() -> None:
@@ -387,7 +388,12 @@ def test_expanded_regex_recorded_in_run_manifest(
     suite_file.write_text(_regex_suite_text(cece_config_path, "cons.*"))
     suite = SuiteConfig.from_yaml(suite_file)
     manifest = RunManifest(
-        run_id="01JZZZZZZZZZZZZZZZZZZZZZZZ", cece_commit=None, suites=[suite]
+        run_id="01JZZZZZZZZZZZZZZZZZZZZZZZ",
+        cece_commit=None,
+        platform=Platform.LOCAL,
+        runtime=Runtime.DOCKER,
+        modulefile=None,
+        suites=[suite],
     )
     manifest_path = tmp_path / "run.yaml"
     manifest.to_yaml(manifest_path)
@@ -455,7 +461,12 @@ def test_run_manifest_round_trips_through_yaml(
     # suites is a list in selection order — one element for single-suite runs.
     suite = SuiteConfig.from_yaml(suite_path)
     manifest = RunManifest(
-        run_id="01JZZZZZZZZZZZZZZZZZZZZZZZ", cece_commit=None, suites=[suite]
+        run_id="01JZZZZZZZZZZZZZZZZZZZZZZZ",
+        cece_commit=None,
+        platform=Platform.LOCAL,
+        runtime=Runtime.DOCKER,
+        modulefile=None,
+        suites=[suite],
     )
     manifest_path = tmp_path / "run.yaml"
     manifest.to_yaml(manifest_path)
@@ -474,4 +485,10 @@ def test_run_manifest_requires_explicit_cece_commit(suite_path: Path) -> None:
     # expressible for checkout-less dry-runs.
     suite = SuiteConfig.from_yaml(suite_path)
     with pytest.raises(ValidationError, match="cece_commit"):
-        RunManifest(run_id="01JZZZZZZZZZZZZZZZZZZZZZZZ", suites=[suite])  # type: ignore[call-arg]
+        RunManifest(  # type: ignore[call-arg]
+            run_id="01JZZZZZZZZZZZZZZZZZZZZZZZ",
+            platform=Platform.LOCAL,
+            runtime=Runtime.DOCKER,
+            modulefile=None,
+            suites=[suite],
+        )
